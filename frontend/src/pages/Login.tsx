@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { UserPlus } from "lucide-react";
+import { Lock } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -19,8 +19,8 @@ const particlesInit = async (main: any) => {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const Register: React.FC = () => {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+const Login: React.FC = () => {
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -36,11 +36,12 @@ const Register: React.FC = () => {
     setError("");
     setSuccess("");
     try {
-      await axios.post(`${API_URL}/auth/register`, form);
-      setSuccess("Registration successful! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 1500);
+      const response = await axios.post(`${API_URL}/auth/login`, form);
+      localStorage.setItem("token", response.data.token);
+      setSuccess("Login successful! Redirecting...");
+      setTimeout(() => navigate("/dashboard"), 1200);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      setError(err.response?.data?.message || "Invalid email or password.");
     }
   };
 
@@ -97,24 +98,16 @@ const Register: React.FC = () => {
                 animate={{ scale: [1, 1.14, 1] }}
                 transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
               >
-                <UserPlus className="text-pink-400 w-12 h-12" />
+                <Lock className="text-blue-400 w-12 h-12" />
               </motion.div>
               <h1 className="text-3xl font-extrabold text-center mb-1 text-slate-700 drop-shadow-lg">
-                Create your account
+                Welcome back
               </h1>
               <p className="text-muted-foreground text-center text-base text-gray-600 font-medium">
-                JOB APPLICATION TRACKER </p><p><span className="text-pink-400">Easy</span>, <span className="text-blue-400">Analytical</span> and <span className="text-green-400">Fun</span>!
+                Login to your <span className="text-blue-400">Job Application Tracker</span>
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                type="text"
-                name="name"
-                placeholder="Full Name"
-                value={form.name}
-                onChange={handleChange}
-                required
-              />
               <Input
                 type="email"
                 name="email"
@@ -152,14 +145,19 @@ const Register: React.FC = () => {
                   {success}
                 </motion.div>
               )}
-              <Button className="w-full bg-pink-400 hover:bg-pink-500 transition rounded-2xl shadow-lg text-white text-lg font-bold py-2 mt-2">
-                Register
+              <Button className="w-full bg-blue-400 hover:bg-blue-500 transition rounded-2xl shadow-lg text-white text-lg font-bold py-2 mt-2">
+                Login
               </Button>
             </form>
             <div className="mt-6 text-center text-sm text-gray-500">
-              Already have an account?{" "}
-              <a href="/login" className="text-blue-500 underline font-semibold">
-                Login
+              Don&apos;t have an account?{" "}
+              <a href="/register" className="text-pink-500 underline font-semibold">
+                Register
+              </a>
+            </div>
+            <div className="mt-2 text-center text-sm text-gray-500">
+              <a href="/forgot-password" className="text-blue-500 underline font-semibold">
+                Forgot password?
               </a>
             </div>
           </CardContent>
@@ -176,4 +174,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default Login;
