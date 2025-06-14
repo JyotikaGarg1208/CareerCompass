@@ -5,7 +5,7 @@ const SIDEBAR_WIDTH = 96;
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen w-full bg-gradient-to-tr from-pink-100 via-blue-50 to-green-100">
-    <Sidebar onAdd={() => {}} />
+    <Sidebar />
     <main className="flex-1 p-0 m-0 min-h-screen" style={{ marginLeft: SIDEBAR_WIDTH }}>
       {children}
     </main>
@@ -13,3 +13,5 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 export default MainLayout;
+
+

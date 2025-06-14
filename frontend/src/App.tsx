@@ -10,7 +10,6 @@ import ResetPassword from "@/pages/ResetPassword";
 import KanbanBoard from "@/pages/KanbanBoard";
 import CalendarView from "@/pages/CalendarView";
 
-
 function App() {
   return (
     <Router>
@@ -22,7 +21,9 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <Dashboard />
+            <MainLayout>
+              <Dashboard />
+            </MainLayout>
           </ProtectedRoute>
         } />
         <Route path="/kanban" element={

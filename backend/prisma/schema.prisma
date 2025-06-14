@@ -2,9 +2,11 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
 }
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -12,15 +14,18 @@ model User {
   password  String
   jobs      JobApplication[]
 }
+
 model JobApplication {
-  id         String   @id @default(uuid())
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String
-  company    String
-  position   String
-  status     String
-  appliedDate DateTime
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  company      String
+  position     String
+  status       String
+  appliedDate  DateTime
+  interviewDate DateTime?  
+  avatarUrl    String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

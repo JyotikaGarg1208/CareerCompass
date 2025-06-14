@@ -1,20 +1,15 @@
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import React, { useEffect, useState } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import type { Event } from "react-big-calendar";
-import {format} from "date-fns/format";
-import {parse} from "date-fns/parse";
-import {startOfWeek} from "date-fns/startOfWeek";
-import {getDay} from "date-fns/getDay";
-import {addDays} from "date-fns/addDays";
-import {isBefore} from "date-fns/isBefore";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import { format, parse, startOfWeek, getDay, addDays, isBefore } from "date-fns";
+import { enGB } from "date-fns/locale";
 import { toast, Toaster } from "react-hot-toast";
 import axios from "axios";
 import { CalendarCheck, Briefcase, StickyNote } from "lucide-react";
+import type { View } from "react-big-calendar";
 
-const locales = {
-  "en-GB": require("date-fns/locale/en-GB"),
-};
+const locales = { "en-GB": enGB };
 
 const localizer = dateFnsLocalizer({
   format,
@@ -49,8 +44,9 @@ const CalendarView: React.FC = () => {
   const [jobs, setJobs] = useState<JobApp[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [calendarView, setCalendarView] = useState<View>("month");
+  const [calendarDate, setCalendarDate] = useState<Date | undefined>(undefined);
 
-  // Fetch jobs
   useEffect(() => {
     const fetchJobs = async () => {
       const token = localStorage.getItem("token");
@@ -62,26 +58,22 @@ const CalendarView: React.FC = () => {
     fetchJobs();
   }, []);
 
-  // Convert jobs to calendar events
   useEffect(() => {
     const jobEvents: CalendarEvent[] = [];
     jobs.forEach((job) => {
-      // Only show interview events with a date
       if (job.interviewDate && job.status === "Interview") {
         jobEvents.push({
           id: job.id,
           title: `Interview: ${job.position} @ ${job.company}`,
           start: new Date(job.interviewDate),
-          end: addDays(new Date(job.interviewDate), 1), // Interview day only
+          end: new Date(job.interviewDate),
           job,
         });
       }
-      // Optionally: also mark application or offer/acceptance events, up to you!
     });
     setEvents(jobEvents);
   }, [jobs]);
 
-  // Interview reminder (in-app toast) for interviews within next 24h
   useEffect(() => {
     const now = new Date();
     events.forEach((event) => {
@@ -99,28 +91,38 @@ const CalendarView: React.FC = () => {
     });
   }, [events]);
 
-  // Calendar styling
   const eventStyleGetter = (event: CalendarEvent) => {
-  // Color by event type or job status
-  let bg = "#ffe066", color = "#703be7";
-  if (event.job.status === "Interview") { bg = "#ffe066"; color = "#8a5af5"; }
-  else if (event.job.status === "Offer") { bg = "#caffbf"; color = "#21774a"; }
-  else if (event.job.status === "Accepted") { bg = "#bdb2ff"; color = "#5c29b9"; }
-  else if (event.job.status === "Rejected") { bg = "#ffd6e0"; color = "#ea4c89"; }
-  else { bg = "#d0f4ff"; color = "#0077b6"; }
-  return {
-    style: {
-      backgroundColor: bg,
-      color,
-      borderRadius: "16px",
-      border: "none",
-      padding: "4px 10px",
-      fontWeight: "bold",
-      fontSize: "1.1em",
-      boxShadow: "0 2px 8px 0 rgba(124,58,237,0.10)",
-    },
+    let bg = "#ffe066",
+      color = "#703be7";
+    if (event.job.status === "Interview") {
+      bg = "#ffe066";
+      color = "#8a5af5";
+    } else if (event.job.status === "Offer") {
+      bg = "#caffbf";
+      color = "#21774a";
+    } else if (event.job.status === "Accepted") {
+      bg = "#bdb2ff";
+      color = "#5c29b9";
+    } else if (event.job.status === "Rejected") {
+      bg = "#ffd6e0";
+      color = "#ea4c89";
+    } else {
+      bg = "#d0f4ff";
+      color = "#0077b6";
+    }
+    return {
+      style: {
+        backgroundColor: bg,
+        color,
+        borderRadius: "16px",
+        border: "none",
+        padding: "4px 10px",
+        fontWeight: "bold",
+        fontSize: "1.1em",
+        boxShadow: "0 2px 8px 0 rgba(124,58,237,0.10)",
+      },
+    };
   };
-};
 
   return (
     <div className="min-h-screen p-4 bg-gradient-to-tr from-pink-100 via-blue-50 to-green-100">
@@ -140,9 +142,12 @@ const CalendarView: React.FC = () => {
           style={{ height: 600, borderRadius: 24 }}
           eventPropGetter={eventStyleGetter}
           onSelectEvent={(event) => setSelectedEvent(event as CalendarEvent)}
+          view={calendarView}
+          onView={setCalendarView}
+          date={calendarDate}
+          onNavigate={setCalendarDate}
         />
       </div>
-
       {/* Modal popup for event details */}
       {selectedEvent && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
@@ -160,7 +165,7 @@ const CalendarView: React.FC = () => {
               <CalendarCheck className="w-5 h-5 text-blue-400" />
               Interview on:{" "}
               <span className="font-semibold text-green-700 ml-1">
-                {format(selectedEvent.start, "do MMM yyyy")}
+                {format(selectedEvent.start, "do MMM yyyy, h:mm a")}
               </span>
             </div>
             {selectedEvent.job.notes && (

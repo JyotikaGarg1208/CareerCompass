@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Sidebar from "@/components/Sidebar";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const statusOptions = [
@@ -25,6 +29,11 @@ const statusOptions = [
   "Rejected",
   "Accepted",
 ];
+
+
+export interface JobApplicationsManagerHandle {
+  openModal: () => void;
+}
 
 // Styles for colored status chips
 const statusStyles: Record<string, string> = {
@@ -46,10 +55,15 @@ interface JobApp {
   position: string;
   status: string;
   appliedDate: string;
+  interviewDate?: string;
   notes?: string;
 }
 
-const JobApplicationsManager: React.FC = () => {
+export interface JobApplicationsManagerHandle {
+  openModal: () => void;
+}
+
+const JobApplicationsManager = forwardRef<JobApplicationsManagerHandle>((props, ref) => {
   const [jobs, setJobs] = useState<JobApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
@@ -60,11 +74,17 @@ const JobApplicationsManager: React.FC = () => {
     position: "",
     status: "Applied",
     appliedDate: "",
+    interviewDate: "",
     notes: "",
   });
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Expose openModal to parent via ref
+  useImperativeHandle(ref, () => ({
+    openModal: () => openModal(),
+  }));
 
   // Fetch jobs
   useEffect(() => {
@@ -103,6 +123,7 @@ const JobApplicationsManager: React.FC = () => {
             position: job.position,
             status: job.status,
             appliedDate: job.appliedDate?.slice(0, 10),
+            interviewDate: job.interviewDate?.slice(0, 10) || "",
             notes: job.notes || "",
           }
         : { company: "", position: "", status: "Applied", appliedDate: "", notes: "" }
@@ -151,12 +172,8 @@ const JobApplicationsManager: React.FC = () => {
   };
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <Sidebar onAdd={() => openModal()} />
-
-      {/* Main content */}
-      <main className="flex-1 ml-20 px-4 py-8">
+    <div className="flex w-full">
+      <main className="flex-1 px-4 py-8">
         {loading ? (
           <div className="text-center mt-8 text-lg text-gray-500">
             Loading jobs...
@@ -293,6 +310,7 @@ const JobApplicationsManager: React.FC = () => {
                     required
                   />
                 </div>
+                
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 text-gray-700 font-medium">
                     <FileText className="w-5 h-5 text-blue-400" /> Status
@@ -310,6 +328,36 @@ const JobApplicationsManager: React.FC = () => {
                     ))}
                   </select>
                 </div>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 text-gray-700 font-medium">
+                    Interview Date
+                  </label>
+                <input type="date" name="interviewDate" value={form.interviewDate ? form.interviewDate.slice(0, 10) : ""} onChange={e => setForm(f => ({
+                ...f,
+                interviewDate: e.target.value
+                ? (f.interviewDate
+                ? e.target.value + f.interviewDate.slice(10)
+                : e.target.value)
+                : ""
+                }))}
+                />
+                </div>
+                <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-gray-700 font-medium">
+                  Interview Time
+                </label>
+                <input
+                  type="time"
+                  name="interviewTime"
+                  value={form.interviewDate ? form.interviewDate.slice(11, 16) : ""}
+                  onChange={e => setForm(f => ({
+                  ...f,
+                  interviewDate: f.interviewDate
+                  ? f.interviewDate.slice(0, 10) + "T" + e.target.value
+                  : "" // Only set if date exists
+                }))}
+                />
+                </div>    
                 <div className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 text-gray-700 font-medium">
                     <StickyNote className="w-5 h-5 text-yellow-400" /> Notes
@@ -338,6 +386,6 @@ const JobApplicationsManager: React.FC = () => {
       </main>
     </div>
   );
-};
+});
 
 export default JobApplicationsManager;
